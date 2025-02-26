@@ -1,5 +1,5 @@
 import axios from "axios";
-import { IPost } from "../App";
+import { IPost } from "../pages/Posts";
 
 const getPost = async (): Promise<IPost[] | undefined> => {
   try {

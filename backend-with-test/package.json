@@ -1,0 +1,31 @@
+{
+  "name": "backend-with-test",
+  "version": "1.0.0",
+  "main": "./dist/server.js",
+  "scripts": {
+    "build": "tsc",
+    "start": "node ./dist/server.js",
+    "dev": "nodemon",
+    "test": "jest --passWithNoTests"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "description": "",
+  "devDependencies": {
+    "@types/express": "^5.0.0",
+    "@types/jest": "^29.5.14",
+    "@types/node": "^22.13.5",
+    "@types/supertest": "^6.0.2",
+    "jest": "^29.7.0",
+    "nodemon": "^3.1.9",
+    "supertest": "^7.0.0",
+    "ts-jest": "^29.2.6",
+    "ts-node": "^10.9.2",
+    "typescript": "^5.7.3"
+  },
+  "dependencies": {
+    "dotenv": "^16.4.7",
+    "express": "^4.21.2"
+  }
+}
