@@ -1,6 +1,7 @@
 {
   "name": "backend-with-test",
   "version": "1.0.0",
+  "type": "module",
   "main": "./dist/server.js",
   "scripts": {
     "build": "tsc",

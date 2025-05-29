@@ -1,0 +1,21 @@
+{
+	"compilerOptions": {
+		"target": "ES6",
+		"module": "CommonJS",
+		"outDir": "./dist",
+		"rootDir": "./src",
+		"strict": true,
+		"esModuleInterop": true,
+		"baseUrl": "./src",
+		"paths": {
+			"@app/*": ["app/*"],
+			"@config/*": ["config/*"],
+			"@controllers/*": ["controllers/*"],
+			"@middleware/*": ["middleware/*"],
+			"@models/*": ["models/*"],
+			"@routes/*": ["routes/*"],
+			"@services/*": ["services/*"],
+			"@utils/*": ["utils/*"]
+		}
+	}
+}
