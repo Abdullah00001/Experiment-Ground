@@ -3,17 +3,75 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <link rel="stylesheet" href="style.css" />
+    <link rel="stylesheet" href="./css/style.css" />
     <title>Document</title>
   </head>
   <body>
     <div class="container">
-      <div class="inner-container">
-        <ul id="hello-list" class="hello-list">
-            <!-- List items will be added here by script.js -->
-        </ul>
+      <header class="header">
+        <div class="logo">
+          <div class="hamburger">
+            <img
+              src="./assets/burger-menu-svgrepo-com.svg"
+              alt="hamburger-icon"
+            />
+          </div>
+          <img
+            class="logo-img"
+            src="https://www.gstatic.com/images/branding/product/1x/contacts_2022_48dp.png"
+            alt="logo-img"
+          />
+          <h1>Contacts</h1>
+        </div>
+        <div class="searchbar">
+          <div class="search">
+            <input type="text" placeholder="Search..." />
+          </div>
+        </div>
+        <div class="navigation">
+          <div class="avatar"><span>AB</span></div>
+          <div class="settings">
+            <i class="fa-solid fa-gear"></i>
+          </div>
+          <div class="help">
+            <i class="fa-solid fa-circle-question"></i>
+          </div>
+        </div>
+      </header>
+      <div class="main-area">
+        <aside class="sidebar">
+          <div class="create-contact-btn">
+            <button>
+              <i class="fa-solid fa-plus"></i><span>Create Contact</span>
+            </button>
+          </div>
+          <div class="sidebar-nav">
+            <ul class="sidenav" id="sidenav"></ul>
+          </div>
+        </aside>
+        <main class="content-area">
+          <div class="inner-content-area">
+            <div class="no-contact-found">
+              <img
+                src="./assets//undraw_empty-street_3ogh.svg"
+                alt="not_contact_found_img"
+              />
+              <h1>No Contacts Yet</h1>
+              <div class="no-contacts-found-useful-btns">
+                <button class="not-found-create-contact-btn">
+                  Create Contact
+                </button>
+                <button class="not-found-import-btn">Import Contacts</button>
+              </div>
+            </div>
+          </div>
+        </main>
       </div>
     </div>
-    <script src="script.js"></script>
+    <script
+      src="https://kit.fontawesome.com/a59ccc9d18.js"
+      crossorigin="anonymous"
+    ></script>
+    <script type="module" src="./js/main.js"></script>
   </body>
 </html>
