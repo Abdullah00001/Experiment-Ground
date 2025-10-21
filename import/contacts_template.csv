@@ -1,0 +1,2 @@
+firstName,lastName,email,phoneCountryCode,phoneNumber,birthdayDate,birthdayMonth,birthdayYear,addressStreet,addressCity,addressCountry,addressPostCode,organizationName,organizationPosition
+John,Doe,john.doe@example.com,+1,1234567890,15,4,1990,123 Main St,New York,USA,10001,Acme Corp,Software Engineer
