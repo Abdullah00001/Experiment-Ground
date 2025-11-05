@@ -1,0 +1,1406 @@
+openapi: 3.0.3
+info:
+  title: Workly Contacts API
+  description: |
+    A comprehensive RESTful API for contact management application with authentication, 
+    profile management, and contact lifecycle operations.
+
+    ## Features
+    - JWT-based authentication with refresh tokens
+    - OTP verification system
+    - Password recovery workflow
+    - Profile management
+    - Contact CRUD operations
+    - Favorites and trash management
+    - Search functionality
+    - Bulk operations
+
+    ## Authentication
+    Most endpoints require authentication via JWT access token in the Authorization header:
+    ```
+    Authorization: Bearer <access_token>
+    ```
+  version: 1.5.0
+  contact:
+    name: Workly Contacts
+    email: your-email@example.com
+  license:
+    name: All Rights Reserved
+    url: https://github.com/yourusername/workly-contacts/blob/main/LICENSE
+
+servers:
+  - url: http://localhost:3000/api
+    description: Development server
+  - url: https://your-domain.com/api
+    description: Production server
+
+tags:
+  - name: Authentication
+    description: User authentication and authorization operations
+  - name: Profile
+    description: User profile management
+  - name: Feedback
+    description: User feedback operations
+  - name: Contacts
+    description: Contact management operations
+  - name: Favorites
+    description: Favorite contacts management
+  - name: Trash
+    description: Trash/deleted contacts management
+  - name: Search
+    description: Contact search operations
+
+paths:
+  # Authentication Endpoints
+  /auth/signup:
+    post:
+      tags:
+        - Authentication
+      summary: User registration
+      description: Register a new user account
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - firstName
+                - lastName
+                - email
+                - password
+              properties:
+                firstName:
+                  type: string
+                  example: John
+                lastName:
+                  type: string
+                  example: Doe
+                email:
+                  type: string
+                  format: email
+                  example: john.doe@example.com
+                password:
+                  type: string
+                  minLength: 6
+                  example: password123
+                phone:
+                  type: string
+                  example: '+1234567890'
+      responses:
+        '201':
+          description: User registered successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthResponse'
+        '400':
+          description: Validation error or user already exists
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /auth/verify:
+    post:
+      tags:
+        - Authentication
+      summary: Verify user account
+      description: Verify user account using OTP sent to email
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - email
+                - otp
+              properties:
+                email:
+                  type: string
+                  format: email
+                  example: john.doe@example.com
+                otp:
+                  type: string
+                  example: '123456'
+      responses:
+        '200':
+          description: User verified successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SuccessResponse'
+        '400':
+          description: Invalid OTP or validation error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /auth/resend:
+    post:
+      tags:
+        - Authentication
+      summary: Resend verification OTP
+      description: Resend OTP for account verification
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - email
+              properties:
+                email:
+                  type: string
+                  format: email
+                  example: john.doe@example.com
+      responses:
+        '200':
+          description: OTP sent successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SuccessResponse'
+        '400':
+          description: User not found or already verified
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /auth/login:
+    post:
+      tags:
+        - Authentication
+      summary: User login
+      description: Authenticate user and return JWT tokens
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - email
+                - password
+              properties:
+                email:
+                  type: string
+                  format: email
+                  example: john.doe@example.com
+                password:
+                  type: string
+                  example: password123
+      responses:
+        '200':
+          description: Login successful
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LoginResponse'
+        '401':
+          description: Invalid credentials
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: Account not verified
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /auth/check:
+    post:
+      tags:
+        - Authentication
+      summary: Check access token validity
+      description: Validate if the current access token is valid
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Token is valid
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SuccessResponse'
+        '401':
+          description: Invalid or expired token
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /auth/refresh:
+    post:
+      tags:
+        - Authentication
+      summary: Refresh access token
+      description: Get new access token using refresh token
+      security:
+        - refreshAuth: []
+      responses:
+        '200':
+          description: New tokens generated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TokenResponse'
+        '401':
+          description: Invalid refresh token
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /auth/logout:
+    post:
+      tags:
+        - Authentication
+      summary: User logout
+      description: Logout user and invalidate refresh token
+      security:
+        - refreshAuth: []
+      responses:
+        '200':
+          description: Logout successful
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SuccessResponse'
+        '401':
+          description: Invalid refresh token
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  # Password Recovery Endpoints
+  /auth/recover/find:
+    post:
+      tags:
+        - Authentication
+      summary: Find user for password recovery
+      description: Initiate password recovery process
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - email
+              properties:
+                email:
+                  type: string
+                  format: email
+                  example: john.doe@example.com
+      responses:
+        '200':
+          description: User found, recovery process initiated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RecoveryTokenResponse'
+        '404':
+          description: User not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /auth/recover/check/stp1:
+    post:
+      tags:
+        - Authentication
+      summary: Check recovery step 1 token
+      description: Validate recovery step 1 token
+      security:
+        - recoveryStep1Auth: []
+      responses:
+        '200':
+          description: Token valid
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SuccessResponse'
+        '401':
+          description: Invalid token
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /auth/recover/sent-otp:
+    post:
+      tags:
+        - Authentication
+      summary: Send recovery OTP
+      description: Send OTP for password recovery
+      security:
+        - recoveryStep1Auth: []
+      responses:
+        '200':
+          description: OTP sent successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RecoveryTokenResponse'
+        '401':
+          description: Invalid token
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /auth/recover/check/stp2:
+    post:
+      tags:
+        - Authentication
+      summary: Check recovery step 2 token
+      description: Validate recovery step 2 token
+      security:
+        - recoveryStep2Auth: []
+      responses:
+        '200':
+          description: Token valid
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SuccessResponse'
+        '401':
+          description: Invalid token
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /auth/recover/verify:
+    post:
+      tags:
+        - Authentication
+      summary: Verify recovery OTP
+      description: Verify OTP for password recovery
+      security:
+        - recoveryStep2Auth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - otp
+              properties:
+                otp:
+                  type: string
+                  example: '123456'
+      responses:
+        '200':
+          description: OTP verified successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RecoveryTokenResponse'
+        '400':
+          description: Invalid OTP
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /auth/recover/resent:
+    post:
+      tags:
+        - Authentication
+      summary: Resend recovery OTP
+      description: Resend OTP for password recovery
+      security:
+        - recoveryStep2Auth: []
+      responses:
+        '200':
+          description: OTP resent successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SuccessResponse'
+        '401':
+          description: Invalid token
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /auth/recover/check/stp3:
+    post:
+      tags:
+        - Authentication
+      summary: Check recovery step 3 token
+      description: Validate recovery step 3 token
+      security:
+        - recoveryStep3Auth: []
+      responses:
+        '200':
+          description: Token valid
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SuccessResponse'
+        '401':
+          description: Invalid token
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /auth/recover/reset:
+    patch:
+      tags:
+        - Authentication
+      summary: Reset password
+      description: Reset user password using recovery token
+      security:
+        - recoveryStep3Auth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - password
+                - confirmPassword
+              properties:
+                password:
+                  type: string
+                  minLength: 6
+                  example: newpassword123
+                confirmPassword:
+                  type: string
+                  example: newpassword123
+      responses:
+        '200':
+          description: Password reset successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SuccessResponse'
+        '400':
+          description: Validation error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  # Profile Endpoints
+  /me:
+    get:
+      tags:
+        - Profile
+      summary: Get user profile
+      description: Retrieve current user's profile information
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Profile retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProfileResponse'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+    patch:
+      tags:
+        - Profile
+      summary: Update user profile
+      description: Update current user's profile information
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ProfileUpdateRequest'
+      responses:
+        '200':
+          description: Profile updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProfileResponse'
+        '400':
+          description: Validation error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+    post:
+      tags:
+        - Profile
+      summary: Change password
+      description: Change user's password
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - currentPassword
+                - newPassword
+                - confirmPassword
+              properties:
+                currentPassword:
+                  type: string
+                  example: oldpassword123
+                newPassword:
+                  type: string
+                  minLength: 6
+                  example: newpassword123
+                confirmPassword:
+                  type: string
+                  example: newpassword123
+      responses:
+        '200':
+          description: Password changed successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SuccessResponse'
+        '400':
+          description: Validation error or incorrect current password
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+    delete:
+      tags:
+        - Profile
+      summary: Delete user account
+      description: Permanently delete user account and all associated data
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Account deleted successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SuccessResponse'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  # Feedback Endpoint
+  /feedback:
+    post:
+      tags:
+        - Feedback
+      summary: Submit feedback
+      description: Submit user feedback
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - subject
+                - message
+              properties:
+                subject:
+                  type: string
+                  example: Feature Request
+                message:
+                  type: string
+                  example: It would be great to have contact import feature
+                category:
+                  type: string
+                  enum: [bug, feature, improvement, other]
+                  example: feature
+      responses:
+        '201':
+          description: Feedback submitted successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SuccessResponse'
+        '400':
+          description: Validation error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  # Contact Endpoints
+  /contacts:
+    get:
+      tags:
+        - Contacts
+      summary: Get all contacts
+      description: Retrieve all user's contacts with pagination
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: page
+          in: query
+          description: Page number
+          schema:
+            type: integer
+            default: 1
+        - name: limit
+          in: query
+          description: Number of contacts per page
+          schema:
+            type: integer
+            default: 10
+        - name: sortBy
+          in: query
+          description: Sort field
+          schema:
+            type: string
+            enum: [firstName, lastName, email, createdAt]
+            default: firstName
+        - name: sortOrder
+          in: query
+          description: Sort order
+          schema:
+            type: string
+            enum: [asc, desc]
+            default: asc
+      responses:
+        '200':
+          description: Contacts retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ContactsResponse'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+    post:
+      tags:
+        - Contacts
+      summary: Create new contact
+      description: Create a new contact
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ContactCreateRequest'
+      responses:
+        '201':
+          description: Contact created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ContactResponse'
+        '400':
+          description: Validation error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /contacts/{id}:
+    get:
+      tags:
+        - Contacts
+      summary: Get contact by ID
+      description: Retrieve a specific contact by ID
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Contact ID
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Contact retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ContactResponse'
+        '404':
+          description: Contact not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+    put:
+      tags:
+        - Contacts
+      summary: Update contact
+      description: Update a specific contact
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Contact ID
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ContactUpdateRequest'
+      responses:
+        '200':
+          description: Contact updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ContactResponse'
+        '400':
+          description: Validation error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Contact not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  # Search Endpoint
+  /search:
+    get:
+      tags:
+        - Search
+      summary: Search contacts
+      description: Search contacts by name, email, or phone
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: q
+          in: query
+          required: true
+          description: Search query
+          schema:
+            type: string
+        - name: page
+          in: query
+          description: Page number
+          schema:
+            type: integer
+            default: 1
+        - name: limit
+          in: query
+          description: Number of results per page
+          schema:
+            type: integer
+            default: 10
+      responses:
+        '200':
+          description: Search results
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ContactsResponse'
+        '400':
+          description: Invalid search query
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  # Favorites Endpoints
+  /favorites:
+    get:
+      tags:
+        - Favorites
+      summary: Get favorite contacts
+      description: Retrieve all favorite contacts
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: page
+          in: query
+          description: Page number
+          schema:
+            type: integer
+            default: 1
+        - name: limit
+          in: query
+          description: Number of contacts per page
+          schema:
+            type: integer
+            default: 10
+      responses:
+        '200':
+          description: Favorite contacts retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ContactsResponse'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /favorites/{id}:
+    patch:
+      tags:
+        - Favorites
+      summary: Toggle favorite status
+      description: Add or remove contact from favorites
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Contact ID
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Favorite status updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ContactResponse'
+        '404':
+          description: Contact not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  # Trash Endpoints
+  /trash:
+    get:
+      tags:
+        - Trash
+      summary: Get deleted contacts
+      description: Retrieve all contacts in trash
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: page
+          in: query
+          description: Page number
+          schema:
+            type: integer
+            default: 1
+        - name: limit
+          in: query
+          description: Number of contacts per page
+          schema:
+            type: integer
+            default: 10
+      responses:
+        '200':
+          description: Trash contacts retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ContactsResponse'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+    patch:
+      tags:
+        - Trash
+      summary: Bulk change trash status
+      description: Move multiple contacts to/from trash
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - contactIds
+                - isDeleted
+              properties:
+                contactIds:
+                  type: array
+                  items:
+                    type: string
+                  example:
+                    ['60f1b2b3c4d5e6f7g8h9i0j1', '60f1b2b3c4d5e6f7g8h9i0j2']
+                isDeleted:
+                  type: boolean
+                  example: true
+      responses:
+        '200':
+          description: Trash status updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BulkOperationResponse'
+        '400':
+          description: Validation error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /trash/{id}:
+    patch:
+      tags:
+        - Trash
+      summary: Toggle trash status
+      description: Move contact to/from trash
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Contact ID
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Trash status updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ContactResponse'
+        '404':
+          description: Contact not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  # Delete Endpoints
+  /contacts/delete:
+    delete:
+      tags:
+        - Contacts
+      summary: Delete multiple contacts permanently
+      description: Permanently delete multiple contacts
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - contactIds
+              properties:
+                contactIds:
+                  type: array
+                  items:
+                    type: string
+                  example:
+                    ['60f1b2b3c4d5e6f7g8h9i0j1', '60f1b2b3c4d5e6f7g8h9i0j2']
+      responses:
+        '200':
+          description: Contacts deleted successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BulkOperationResponse'
+        '400':
+          description: Validation error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /contacts/delete/{id}:
+    delete:
+      tags:
+        - Contacts
+      summary: Delete contact permanently
+      description: Permanently delete a specific contact
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Contact ID
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Contact deleted successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SuccessResponse'
+        '404':
+          description: Contact not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: JWT access token
+    refreshAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: JWT refresh token
+    recoveryStep1Auth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: Recovery step 1 token
+    recoveryStep2Auth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: Recovery step 2 token
+    recoveryStep3Auth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: Recovery step 3 token
+
+  schemas:
+    User:
+      type: object
+      properties:
+        _id:
+          type: string
+          example: '60f1b2b3c4d5e6f7g8h9i0j1'
+        firstName:
+          type: string
+          example: John
+        lastName:
+          type: string
+          example: Doe
+        email:
+          type: string
+          format: email
+          example: john.doe@example.com
+        phone:
+          type: string
+          example: '+1234567890'
+        isVerified:
+          type: boolean
+          example: true
+        createdAt:
+          type: string
+          format: date-time
+          example: '2023-01-01T00:00:00.000Z'
+        updatedAt:
+          type: string
+          format: date-time
+          example: '2023-01-01T00:00:00.000Z'
+
+    Contact:
+      type: object
+      properties:
+        _id:
+          type: string
+          example: '60f1b2b3c4d5e6f7g8h9i0j1'
+        firstName:
+          type: string
+          example: Jane
+        lastName:
+          type: string
+          example: Smith
+        email:
+          type: string
+          format: email
+          example: jane.smith@example.com
+        phone:
+          type: string
+          example: '+1234567890'
+        company:
+          type: string
+          example: 'Tech Corp'
+        jobTitle:
+          type: string
+          example: 'Software Engineer'
+        address:
+          type: object
+          properties:
+            street:
+              type: string
+              example: '123 Main St'
+            city:
+              type: string
+              example: 'New York'
+            state:
+              type: string
+              example: 'NY'
+            zipCode:
+              type: string
+              example: '10001'
+            country:
+              type: string
+              example: 'USA'
+        notes:
+          type: string
+          example: 'Met at conference'
+        isFavorite:
+          type: boolean
+          example: false
+        isDeleted:
+          type: boolean
+          example: false
+        userId:
+          type: string
+          example: '60f1b2b3c4d5e6f7g8h9i0j1'
+        createdAt:
+          type: string
+          format: date-time
+          example: '2023-01-01T00:00:00.000Z'
+        updatedAt:
+          type: string
+          format: date-time
+          example: '2023-01-01T00:00:00.000Z'
+
+    AuthResponse:
+      type: object
+      properties:
+        message:
+          type: string
+          example: 'User registered successfully'
+        user:
+          $ref: '#/components/schemas/User'
+        tokens:
+          $ref: '#/components/schemas/TokenResponse'
+
+    LoginResponse:
+      type: object
+      properties:
+        message:
+          type: string
+          example: 'Login successful'
+        user:
+          $ref: '#/components/schemas/User'
+        tokens:
+          $ref: '#/components/schemas/TokenResponse'
+
+    TokenResponse:
+      type: object
+      properties:
+        accessToken:
+          type: string
+          example: '<access_token>'
+        refreshToken:
+          type: string
+          example: '<refresh_token>'
+
+    SuccessResponse:
+      type: object
+      properties:
+        message:
+          type: string
+          example: 'Operation completed successfully'
+
+    Error:
+      type: object
+      properties:
+        error:
+          type: string
+          example: 'Invalid credentials'
+
+    RecoveryTokenResponse:
+      type: object
+      properties:
+        message:
+          type: string
+          example: 'Token is valid'
+        token:
+          type: string
+          example: '<next_step_token>'
+
+    ProfileResponse:
+      type: object
+      properties:
+        message:
+          type: string
+          example: 'Profile retrieved successfully'
+        user:
+          $ref: '#/components/schemas/User'
+
+    ProfileUpdateRequest:
+      type: object
+      properties:
+        firstName:
+          type: string
+          example: John
+        lastName:
+          type: string
+          example: Doe
+        phone:
+          type: string
+          example: '+1234567890'
+
+    ContactCreateRequest:
+      allOf:
+        - $ref: '#/components/schemas/Contact'
+
+    ContactUpdateRequest:
+      allOf:
+        - $ref: '#/components/schemas/Contact'
+
+    ContactResponse:
+      type: object
+      properties:
+        message:
+          type: string
+          example: 'Contact operation successful'
+        contact:
+          $ref: '#/components/schemas/Contact'
+
+    ContactsResponse:
+      type: object
+      properties:
+        message:
+          type: string
+          example: 'Contacts retrieved successfully'
+        total:
+          type: integer
+          example: 100
+        page:
+          type: integer
+          example: 1
+        limit:
+          type: integer
+          example: 10
+        contacts:
+          type: array
+          items:
+            $ref: '#/components/schemas/Contact'
+
+    BulkOperationResponse:
+      type: object
+      properties:
+        message:
+          type: string
+          example: 'Operation completed for all items'
+        modifiedCount:
+          type: integer
+          example: 2

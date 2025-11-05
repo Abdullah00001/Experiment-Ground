@@ -1,0 +1,33 @@
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.BMonth = exports.Month = void 0;
+var Month;
+(function (Month) {
+    Month["JANUARY"] = "january";
+    Month["FEBRUARY"] = "february";
+    Month["MARCH"] = "march";
+    Month["APRIL"] = "april";
+    Month["MAY"] = "may";
+    Month["JUNE"] = "june";
+    Month["JULY"] = "july";
+    Month["AUGUST"] = "august";
+    Month["SEPTEMBER"] = "september";
+    Month["OCTOBER"] = "october";
+    Month["NOVEMBER"] = "november";
+    Month["DECEMBER"] = "december";
+})(Month || (exports.Month = Month = {}));
+var BMonth;
+(function (BMonth) {
+    BMonth["JANUARY"] = "JANUARY";
+    BMonth["FEBRUARY"] = "FEBRUARY";
+    BMonth["MARCH"] = "MARCH";
+    BMonth["APRIL"] = "APRIL";
+    BMonth["MAY"] = "MAY";
+    BMonth["JUNE"] = "JUNE";
+    BMonth["JULY"] = "JULY";
+    BMonth["AUGUST"] = "AUGUST";
+    BMonth["SEPTEMBER"] = "SEPTEMBER";
+    BMonth["OCTOBER"] = "OCTOBER";
+    BMonth["NOVEMBER"] = "NOVEMBER";
+    BMonth["DECEMBER"] = "DECEMBER";
+})(BMonth || (exports.BMonth = BMonth = {}));
